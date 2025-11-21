@@ -1,0 +1,2 @@
+# pAIthon
+Apuntes so on 
