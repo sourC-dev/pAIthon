@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Distance Metrics Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            background: linear-gradient(to bottom right, #f8fafc, #e2e8f0);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #1e293b;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+
+        .info-box {
+            background: #dbeafe;
+            border: 2px solid #93c5fd;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box p {
+            color: #1e40af;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .btn-euclidean {
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-euclidean.active {
+            background: #3b82f6;
+            color: white;
+        }
+
+        .btn-manhattan {
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-manhattan.active {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-minkowski {
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-minkowski.active {
+            background: #a855f7;
+            color: white;
+        }
+
+        .btn-obstacles {
+            background: white;
+            color: #1e293b;
+            border: 2px solid #e2e8f0;
+        }
+
+        .btn-obstacles.active {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-regenerate {
+            background: #334155;
+            color: white;
+        }
+
+        .btn-regenerate:hover {
+            background: #1e293b;
+        }
+
+        .canvas-container {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            border: 2px solid #e2e8f0;
+        }
+
+        canvas {
+            border: 2px solid #cbd5e1;
+            background: white;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .result-card {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #e2e8f0;
+        }
+
+        .result-card h3 {
+            font-size: 18px;
+            color: #1e293b;
+            margin-bottom: 10px;
+        }
+
+        .result-card .subtitle {
+            font-size: 13px;
+            color: #64748b;
+            margin-bottom: 15px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .result-label {
+            font-weight: 600;
+        }
+
+        .result-value {
+            font-family: 'Courier New', monospace;
+            font-weight: 600;
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+
+        .warning-box p {
+            color: #78350f;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+
+        .legend {
+            display: flex;
+            gap: 20px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 4px;
+            border: 2px solid #334155;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Distance Metrics Demo</h2>
+        
+        <div class="info-box">
+            <p><strong>Important:</strong> KNeighborsRegressor uses distances <strong>WITHOUT obstacles</strong>. It measures geometric distance in "feature space", not actual paths!</p>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-euclidean active" onclick="setMetric('euclidean')">Euclidean (p=2)</button>
+            <button class="btn-manhattan" onclick="setMetric('manhattan')">Manhattan (p=1)</button>
+            <button class="btn-minkowski" onclick="setMetric('minkowski3')">Minkowski (p=3)</button>
+            <button class="btn-obstacles" onclick="setMetric('withObstacles')">With Obstacles</button>
+            <button class="btn-regenerate" onclick="regenerateObstacles()">Regenerate</button>
+        </div>
+
+        <div class="canvas-container">
+            <canvas id="gridCanvas" width="500" height="500"></canvas>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: #22c55e;"></div>
+                <span>Start Point</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #ef4444;"></div>
+                <span>End Point</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: #64748b;"></div>
+                <span>Obstacles</span>
+            </div>
+        </div>
+
+        <div class="results">
+            <div class="result-card">
+                <h3>Geometric Distances</h3>
+                <p class="subtitle">Used by KNeighborsRegressor (ignore obstacles)</p>
+                <div class="result-item">
+                    <span class="result-label" style="color: #3b82f6;">Euclidean (p=2):</span>
+                    <span class="result-value" id="euclidean-value">0.00</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" style="color: #10b981;">Manhattan (p=1):</span>
+                    <span class="result-value" id="manhattan-value">0.00</span>
+                </div>
+                <div class="result-item">
+                    <span class="result-label" style="color: #a855f7;">Minkowski (p=3):</span>
+                    <span class="result-value" id="minkowski-value">0.00</span>
+                </div>
+            </div>
+
+            <div class="result-card">
+                <h3>Actual Path Distance</h3>
+                <p class="subtitle">For comparison (NOT used in ML)</p>
+                <div class="result-item">
+                    <span class="result-label" style="color: #ef4444;">Around obstacles:</span>
+                    <span class="result-value" id="path-value">0.00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="warning-box">
+            <p><strong>Key Insight:</strong> In machine learning, "distance" is abstract! When comparing houses (100 sq meters vs 150 sq meters), there are no physical obstacles. The algorithm just calculates geometric distance in the feature space.</p>
+        </div>
+    </div>
+
+    <script>
+        var canvas = document.getElementById('gridCanvas');
+        var ctx = canvas.getContext('2d');
+        var gridSize = 20;
+        var cellSize = 25;
+        
+        var startPoint = { x: 2, y: 2 };
+        var endPoint = { x: 17, y: 17 };
+        var obstacles = [];
+        var selectedMetric = 'euclidean';
+
+        function generateObstacles() {
+            obstacles = [];
+            var obstacleCount = 40;
+            
+            for (var i = 0; i < obstacleCount; i++) {
+                var x = Math.floor(Math.random() * gridSize);
+                var y = Math.floor(Math.random() * gridSize);
+                
+                if ((x === startPoint.x && y === startPoint.y) || 
+                    (x === endPoint.x && y === endPoint.y)) {
+                    continue;
+                }
+                
+                obstacles.push({ x: x, y: y });
+            }
+        }
+
+        function calculateEuclidean() {
+            var dx = endPoint.x - startPoint.x;
+            var dy = endPoint.y - startPoint.y;
+            return Math.sqrt(dx * dx + dy * dy);
+        }
+
+        function calculateManhattan() {
+            return Math.abs(endPoint.x - startPoint.x) + Math.abs(endPoint.y - startPoint.y);
+        }
+
+        function calculateMinkowski(p) {
+            var dx = Math.abs(endPoint.x - startPoint.x);
+            var dy = Math.abs(endPoint.y - startPoint.y);
+            return Math.pow(Math.pow(dx, p) + Math.pow(dy, p), 1/p);
+        }
+
+        function findPathWithObstacles() {
+            var obstacleSet = new Set();
+            for (var i = 0; i < obstacles.length; i++) {
+                obstacleSet.add(obstacles[i].x + ',' + obstacles[i].y);
+            }
+            
+            var queue = [[startPoint.x, startPoint.y, 0, []]];
+            var visited = new Set([startPoint.x + ',' + startPoint.y]);
+            var directions = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            
+            while (queue.length > 0) {
+                var current = queue.shift();
+                var x = current[0];
+                var y = current[1];
+                var dist = current[2];
+                var path = current[3];
+                
+                if (x === endPoint.x && y === endPoint.y) {
+                    var finalPath = path.slice();
+                    finalPath.push({ x: x, y: y });
+                    return { distance: dist, path: finalPath };
+                }
+                
+                for (var d = 0; d < directions.length; d++) {
+                    var nx = x + directions[d][0];
+                    var ny = y + directions[d][1];
+                    var key = nx + ',' + ny;
+                    
+                    if (nx >= 0 && nx < gridSize && ny >= 0 && ny < gridSize &&
+                        !visited.has(key) && !obstacleSet.has(key)) {
+                        visited.add(key);
+                        var newPath = path.slice();
+                        newPath.push({ x: x, y: y });
+                        queue.push([nx, ny, dist + 1, newPath]);
+                    }
+                }
+            }
+            
+            return { distance: Infinity, path: [] };
+        }
+
+        function drawGrid() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            ctx.strokeStyle = '#e2e8f0';
+            ctx.lineWidth = 1;
+            for (var i = 0; i <= gridSize; i++) {
+                ctx.beginPath();
+                ctx.moveTo(i * cellSize, 0);
+                ctx.lineTo(i * cellSize, gridSize * cellSize);
+                ctx.stroke();
+                
+                ctx.beginPath();
+                ctx.moveTo(0, i * cellSize);
+                ctx.lineTo(gridSize * cellSize, i * cellSize);
+                ctx.stroke();
+            }
+
+            if (selectedMetric !== 'withObstacles') {
+                var x1 = startPoint.x * cellSize + cellSize / 2;
+                var y1 = startPoint.y * cellSize + cellSize / 2;
+                var x2 = endPoint.x * cellSize + cellSize / 2;
+                var y2 = endPoint.y * cellSize + cellSize / 2;
+                
+                if (selectedMetric === 'euclidean') {
+                    ctx.strokeStyle = '#3b82f6';
+                } else if (selectedMetric === 'manhattan') {
+                    ctx.strokeStyle = '#10b981';
+                } else {
+                    ctx.strokeStyle = '#a855f7';
+                }
+                
+                ctx.lineWidth = 2;
+                ctx.setLineDash([5, 5]);
+                ctx.globalAlpha = 0.6;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                ctx.setLineDash([]);
+                ctx.globalAlpha = 1;
+            } else {
+                var pathResult = findPathWithObstacles();
+                if (pathResult.path.length > 0) {
+                    ctx.strokeStyle = '#ef4444';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.moveTo(pathResult.path[0].x * cellSize + cellSize / 2, 
+                             pathResult.path[0].y * cellSize + cellSize / 2);
+                    for (var i = 1; i < pathResult.path.length; i++) {
+                        ctx.lineTo(pathResult.path[i].x * cellSize + cellSize / 2, 
+                                 pathResult.path[i].y * cellSize + cellSize / 2);
+                    }
+                    ctx.stroke();
+                }
+            }
+
+            ctx.fillStyle = 'rgba(100, 116, 139, 0.6)';
+            for (var i = 0; i < obstacles.length; i++) {
+                ctx.fillRect(obstacles[i].x * cellSize + 2, obstacles[i].y * cellSize + 2, 
+                           cellSize - 4, cellSize - 4);
+            }
+
+            ctx.fillStyle = '#22c55e';
+            ctx.strokeStyle = '#16a34a';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(startPoint.x * cellSize + cellSize / 2, 
+                   startPoint.y * cellSize + cellSize / 2, 
+                   cellSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
+            ctx.fillStyle = '#ef4444';
+            ctx.strokeStyle = '#dc2626';
+            ctx.beginPath();
+            ctx.arc(endPoint.x * cellSize + cellSize / 2, 
+                   endPoint.y * cellSize + cellSize / 2, 
+                   cellSize / 3, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+        }
+
+        function updateDistances() {
+            document.getElementById('euclidean-value').textContent = calculateEuclidean().toFixed(2);
+            document.getElementById('manhattan-value').textContent = calculateManhattan().toFixed(2);
+            document.getElementById('minkowski-value').textContent = calculateMinkowski(3).toFixed(2);
+            
+            var pathResult = findPathWithObstacles();
+            var pathText = pathResult.distance === Infinity ? 'No path!' : pathResult.distance.toFixed(2);
+            document.getElementById('path-value').textContent = pathText;
+        }
+
+        function setMetric(metric) {
+            selectedMetric = metric;
+            
+            var buttons = document.querySelectorAll('.button-group button');
+            for (var i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('active');
+            }
+            
+            if (metric === 'euclidean') {
+                document.querySelector('.btn-euclidean').classList.add('active');
+            } else if (metric === 'manhattan') {
+                document.querySelector('.btn-manhattan').classList.add('active');
+            } else if (metric === 'minkowski3') {
+                document.querySelector('.btn-minkowski').classList.add('active');
+            } else if (metric === 'withObstacles') {
+                document.querySelector('.btn-obstacles').classList.add('active');
+            }
+            
+            drawGrid();
+        }
+
+        function regenerateObstacles() {
+            generateObstacles();
+            drawGrid();
+            updateDistances();
+        }
+
+        generateObstacles();
+        drawGrid();
+        updateDistances();
+    </script>
+</body>
+</html>
